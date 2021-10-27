@@ -9,12 +9,11 @@ var volatile_enmity = {
 var cumlative_enmity = {
 };
 
-function adjustVolatileEnmity(playerName) {
-    var currentEnmity = volatile_enmity[playerName];
-    if (currentEnmity < 60) {
-        volatile_enmity[playerName] = 0;
-    } else {
-        volatile_enmity[playerName] = currentEnmity - 60;
+function adjustVolatileEnmity(playerName, newValue) {
+    volatile_enmity[playerName] = newValue;
+    let veElement = document.getElementById(playerName + "ve")
+    if (veElement) { 
+        veElement.innerText = volatile_enmity[playerName];
     }
 }
 
@@ -22,12 +21,34 @@ function getVolatileEnmity(playerName) {
     return volatile_enmity[playerName];
 }
 
-function adjustCumulativeEnmity(playerName) {
-
+function adjustCumulativeEnmity(playerName, newValue) {
+    cumlative_enmity[playerName] = newValue;
+    let ceElement = document.getElementById(playerName + "ce");
+    if (ceElement) {
+        ceElement.innerText = cumlative_enmity[playerName];
+    }
 }
 
 function getCumulativeEnmity(playerName) {
-    return cumlative_enmity[playerName];
+    return cumlative_enmity[playerName];    
+}
+
+function performFlash(playerName) {
+    let enmityMod = document.getElementById(playerName + "Enmity")?.value;
+    let ve = 0;
+    let ce = 0;
+
+    if (enmityMod == 0) {
+        ve += FLASH_VE;
+        ce += FLASH_CE;
+
+    } else {
+        ve += (FLASH_VE * (1 + (enmityMod/100)));
+        ce += (FLASH_CE * (1 + (enmityMod/100)));
+    }
+
+    adjustCumulativeEnmity(playerName, ce);
+    adjustVolatileEnmity(playerName, ve);
 }
 
 function createPlayerRow() {
@@ -51,18 +72,26 @@ function createPlayerRow() {
     let enmityInput = document.createElement("input");
     enmityInput.id = playerName + "Enmity";
     enmityInput.style = "width:95%";
+    enmityInput.value = 0;
     enmity.appendChild(enmityInput);
 
     let ce = document.createElement("td");
     ce.innerText = getCumulativeEnmity(playerName);
+    ce.id = playerName + "ce";
 
     let ve = document.createElement("td");
     ve.innerText = getVolatileEnmity(playerName);
+    ve.id = playerName + "ve";
+
+    let flashButton = document.createElement("button");
+    flashButton.innerText = "Flash Enemy";
+    flashButton.onclick = function(){performFlash(playerName)};
 
     baseRow.appendChild(name);
     baseRow.appendChild(enmity);
     baseRow.appendChild(ce);
     baseRow.appendChild(ve);
+    baseRow.appendChild(flashButton);
 
     parentDiv.appendChild(baseRow);
 }
