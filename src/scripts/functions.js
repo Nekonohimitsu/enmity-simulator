@@ -141,11 +141,22 @@ function performFlash(playerName) {
     adjustVolatileEnmity(playerName, ve);
 }
 
-function performAction(playerName, actionName) {
+function performAction(playerName) {
+    let actionNameSelected = document.getElementById("actionInput").value;
+    let actionSelected = enmityActions.find((action) => action.name == actionNameSelected);
+
+    if (actionSelected.targetType == targetTypes.PLAYER) {
+        let selectedPlayer = prompt("Please enter target player name", "");
+        if (selectedPlayer == null || selectedPlayer == "" || !(selectedPlayer in volatile_enmity)) {
+            selectedPlayer = playerName;
+            alert("Player name does not exist. Self-targeting.")
+        }
+    }
+
     //If Player, pop-up to ask which player selecting
 //     SELF: "Self",
 //     ENEMY: "Enemy",
-//     PLAYER: "Player", -- who?
+//     PLAYER: "Player",
 //     AOE_ENEMY: "AoE Enemy",
 //     AOE_PLAYER: "AoE Player"
 
@@ -159,14 +170,14 @@ function createActionButton(baseRow, playerName) {
 
     for(const action of enmityActions) {
         let newAction = document.createElement("option");
-        newAction.value = action;
+        newAction.value = action.name;
         newAction.innerText = action.name;
         selectActionInput.appendChild(newAction);
     }
 
     let actionButton = document.createElement("button");
     actionButton.innerText = "Perform Action";
-    actionButton.onclick = function(){performFlash(playerName)};
+    actionButton.onclick = function(){performAction(playerName)};
     actionButton.style = "margin:2px"
 
     baseRow.appendChild(selectActionInput);
@@ -210,7 +221,7 @@ function createPlayerRow() {
     baseRow.appendChild(ce);
     baseRow.appendChild(ve);
 
-    createActionButton(baseRow);
+    createActionButton(baseRow, playerName);
 
     parentDiv.appendChild(baseRow);
 }
