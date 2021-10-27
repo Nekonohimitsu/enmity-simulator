@@ -8,15 +8,34 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <title>Neko's Enmity Gauge!</title>
-        <meta name="description" content="">
+        <meta name="description" content="Simulates enmity data">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="">
+        <script src="scripts/functions.js"></script>
     </head>
     <body>
-        <!--[if lt IE 7]>
-            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
-        <![endif]-->
-        
+        <style>
+            table, th, td {
+                border:2px solid black;
+                border-collapse: collapse;
+            }
+            th {
+                background-color: lavender;
+            }
+        </style>
+        <h1>FFXI Enmity Simulator</h1>
+        <input id="newPlayerName">
+        <button onclick='createPlayerRow();' style="margin-bottom: 10px;">Add Player</button>
+
+        <table cellpadding='3' id="basePlayerTable">
+            <tr>
+                <th>Player Name</th>
+                <th>Enmity +/-</th>
+                <th>CE</th>
+                <th>VE</th>
+                <th>Actions</th>
+            </tr>
+        </table>
         <script src="" async defer></script>
     </body>
 </html>
