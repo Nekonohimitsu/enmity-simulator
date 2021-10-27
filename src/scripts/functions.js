@@ -100,6 +100,9 @@ var cumlative_enmity = {
 };
 
 function adjustVolatileEnmity(playerName, newValue) {
+    if (newValue > MAX_VOLATILE_ENMITY) {
+        newValue = MAX_VOLATILE_ENMITY;
+    }
     volatile_enmity[playerName] = newValue;
     let veElement = document.getElementById(playerName + "ve")
     if (veElement) { 
@@ -112,6 +115,9 @@ function getVolatileEnmity(playerName) {
 }
 
 function adjustCumulativeEnmity(playerName, newValue) {
+    if (newValue > MAX_CUMULATIVE_ENMITY) {
+        newValue = MAX_CUMULATIVE_ENMITY;
+    }
     cumlative_enmity[playerName] = newValue;
     let ceElement = document.getElementById(playerName + "ce");
     if (ceElement) {
@@ -123,43 +129,69 @@ function getCumulativeEnmity(playerName) {
     return cumlative_enmity[playerName];    
 }
 
-function performFlash(playerName) {
+function adjustEnmity(playerName, actionCE, actionVE) {
     let enmityMod = document.getElementById(playerName + "Enmity")?.value;
-    let ve = 0;
-    let ce = 0;
+    let ve = getVolatileEnmity(playerName);
+    let ce = getCumulativeEnmity(playerName);
 
     if (enmityMod == 0) {
-        ve += FLASH_VE;
-        ce += FLASH_CE;
+        ve += actionVE;
+        ce += actionCE;
 
     } else {
-        ve += (FLASH_VE * (1 + (enmityMod/100)));
-        ce += (FLASH_CE * (1 + (enmityMod/100)));
+        ve += (actionVE * (1 + (enmityMod/100)));
+        ce += (actionCE * (1 + (enmityMod/100)));
     }
 
     adjustCumulativeEnmity(playerName, ce);
     adjustVolatileEnmity(playerName, ve);
 }
 
+function partyHasEnmity() {
+    for(cumulativeEnm in cumlative_enmity) {
+        if (cumulativeEnm != 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function performAction(playerName) {
     let actionNameSelected = document.getElementById("actionInput").value;
     let actionSelected = enmityActions.find((action) => action.name == actionNameSelected);
 
-    if (actionSelected.targetType == targetTypes.PLAYER) {
-        let selectedPlayer = prompt("Please enter target player name", "");
-        if (selectedPlayer == null || selectedPlayer == "" || !(selectedPlayer in volatile_enmity)) {
-            selectedPlayer = playerName;
-            alert("Player name does not exist. Self-targeting.")
-        }
+    switch(actionSelected.targetType) {
+        case targetTypes.SELF:
+            if (getCumulativeEnmity(playerName) == 0) {
+                return;
+            }
+            adjustEnmity(playerName, actionSelected.ce, actionSelected.ve);
+            break;
+        case targetTypes.ENEMY:
+            adjustEnmity(playerName, actionSelected.ce, actionSelected.ve);
+            break;
+        case targetTypes.PLAYER:
+            let selectedPlayer = prompt("Please enter target player name", "");
+            if (selectedPlayer == null || selectedPlayer == "" || !(selectedPlayer in volatile_enmity)) {
+                selectedPlayer = playerName;
+                alert("Player name does not exist. Self-targeting.")
+            }
+            if (getCumulativeEnmity(selectedPlayer) == 0 && getCumulativeEnmity(playerName) == 0) {
+                return;
+            }
+            adjustEnmity(playerName, actionSelected.ce, actionSelected.ve);
+            break;
+        case targetTypes.AOE_PLAYER:
+            let numberOfPlayers = Object.keys(cumlative_enmity).length;
+            if (!partyHasEnmity()) {
+                return;
+            }
+            adjustEnmity(playerName, actionSelected.ce * numberOfPlayers, actionSelected.ve * numberOfPlayers);
+            break;
+        case targetTypes.AOE_ENEMY:
+            adjustEnmity(playerName, actionSelected.ce, actionSelected.ve);
+            break;
     }
-
-    //If Player, pop-up to ask which player selecting
-//     SELF: "Self",
-//     ENEMY: "Enemy",
-//     PLAYER: "Player",
-//     AOE_ENEMY: "AoE Enemy",
-//     AOE_PLAYER: "AoE Player"
-
 }
 
 function createActionButton(baseRow, playerName) {
