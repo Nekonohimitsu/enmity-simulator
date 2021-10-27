@@ -1,5 +1,8 @@
 const MAX_CUMULATIVE_ENMITY = 30000;
 const MAX_VOLATILE_ENMITY = 30000;
+const FLASH_VE = 1280;
+const FLASH_CE = 180;
+
 var volatile_enmity = {
 };
 
@@ -32,7 +35,7 @@ function createPlayerRow() {
     let playerNameInput = document.getElementById("newPlayerName");
     let playerName = playerNameInput.value;
 
-    if (playerName == "" || volatile_enmity[playerName]) {
+    if (playerName == "" || playerName in volatile_enmity) {
         return;
     }
 
