@@ -14,7 +14,7 @@ const DMG_ACTION = "Damage";
 
 volatileEnmityInterval = null;
 cumulativeEnmityInterval = null;
-aggrodPlayer = null;
+currentTarget = null;
 
 /*
 * Class representing an Enmity Action
@@ -206,8 +206,19 @@ function performAction(playerName) {
             adjustEnmity(playerName, actionSelected.ce, actionSelected.ve);
             break;
         case targetTypes.ENEMY:
-            adjustEnmity(playerName, actionSelected.ce, actionSelected.ve);
             triggerCombat();
+            if (actionSelected.name == DMG_ACTION) {
+                let dmgAmt = prompt("Please enter how much damage you are dealing", "");
+                if (dmgAmt == null || dmgAmt == "") {
+                    dmgAmt = 500;
+                    alert("No value entered. Dealing 500 points of damage.")
+                }
+                let dmgCE = Math.floor(0.3 * 80 * dmgAmt / 67);
+                let dmgVE = 3 * dmgCE;
+                adjustEnmity(playerName, dmgCE, dmgVE);
+                return;
+            } 
+            adjustEnmity(playerName, actionSelected.ce, actionSelected.ve);
             break;
         case targetTypes.PLAYER:
             let selectedPlayer = prompt("Please enter target player name", "");
@@ -215,6 +226,17 @@ function performAction(playerName) {
                 selectedPlayer = playerName;
                 alert("Player name does not exist. Self-targeting.")
             }
+            if (actionSelected.name == CURE_ACTION) {
+                let cureAmt = prompt("Please enter how much you are curing for", "");
+                if (cureAmt == null || cureAmt == "") {
+                    cureAmt = 500;
+                    alert("No value entered. Healing for 500.")
+                }
+                let cureCE = Math.floor(cureAmt *  (40/170));
+                let cureVE = 6 * cureCE;
+                adjustEnmity(playerName, cureCE, cureVE);
+                return;
+            } 
             if (getCumulativeEnmity(selectedPlayer) == 0 && getCumulativeEnmity(playerName) == 0) {
                 messageToUser.textContent = "Notice: This action was performed, but yielded no enmity because neither you nor the targeted player have enmity."
                 return;
@@ -247,22 +269,22 @@ function getHighestEnemyPlayer() {
         }
     }
 
-    if (max == 0 && aggrodPlayer != null) {
-        highestPlayer = aggrodPlayer;
+    if ((max == 0 || max == 1) && currentTarget != null) {
+        highestPlayer = currentTarget;
     }
     return highestPlayer;
 }
 
 function simulateEnemyDamageOnTarget() {
-    const highestEnmPlayer = getHighestEnemyPlayer();
-    updateCombatLog(highestEnmPlayer, DAMAGE_ACTION);
+    currentTarget = getHighestEnemyPlayer();
+    updateCombatLog(currentTarget, DAMAGE_ACTION);
     const ceLoss = Math.floor(1800 * DAMAGE_FROM_DAMAGE_ACTION / ASSUMED_MAXIMUM_HP);
-    adjustCumulativeEnmity(highestEnmPlayer, cumulative_enmity[highestEnmPlayer] - ceLoss);
+    adjustCumulativeEnmity(currentTarget, cumulative_enmity[currentTarget] - ceLoss);
 }
 
 function aggroEnemy(player) {
-    if (aggrodPlayer == null) {
-        aggrodPlayer = player;
+    if (currentTarget == null) {
+        currentTarget = player;
     }
     triggerCombat();
 }
@@ -297,6 +319,8 @@ function updateCombatLog(playerName, actionName) {
 function stopCombat() {
     clearInterval(cumulativeEnmityInterval);
     clearInterval(volatileEnmityInterval);
+    cumulativeEnmityInterval = null;
+    volatileEnmityInterval = null;
     for(player in cumulative_enmity) {
         let ceElement = document.getElementById(player + "ce");
         let veElement = document.getElementById(player + "ve");
