@@ -9,11 +9,12 @@ const DAMAGE_ACTION = "DAMAGE";
 const DAMAGE_FROM_DAMAGE_ACTION = 100;
 const ASSUMED_MAXIMUM_HP = 1200;
 const VOLATILE_ENMITY_LOSS_PER_SECOND = 60;
+const CURE_ACTION = "Cure";
+const DMG_ACTION = "Damage";
 
-combatActive = false;
-firstAction = false;
 volatileEnmityInterval = null;
 cumulativeEnmityInterval = null;
+aggrodPlayer = null;
 
 /*
 * Class representing an Enmity Action
@@ -104,8 +105,8 @@ const enmityActions = [
     new EnmityAction("Holy Circle",20,1, [jobs.PLD], targetTypes.AOE_PLAYER),
     new EnmityAction("Jubaku: Ichi",100,20, [jobs.NIN], targetTypes.ENEMY),
     new EnmityAction("MP Drainkiss",0,320, [jobs.BLU], targetTypes.ENEMY),
-    new EnmityAction("Cure",-1,-1,[jobs.PLD], targetTypes.PLAYER),
-    new EnmityAction("Damage",-1, -1, [jobs.NIN], targetTypes.ENEMY)
+    new EnmityAction(CURE_ACTION,-1,-1,[jobs.PLD], targetTypes.PLAYER),
+    new EnmityAction(DMG_ACTION,-1, -1, [jobs.NIN], targetTypes.ENEMY)
 ];
 
 var volatile_enmity = {
@@ -192,10 +193,8 @@ function performAction(playerName) {
     let messageToUser = document.getElementById("MessageToUser");
     let actionSelected = enmityActions.find((action) => action.name == actionNameSelected);
     updateCombatLog(playerName, actionSelected.name);
-    if (!firstAction) {
-        firstAction = true;
+    if (volatileEnmityInterval == undefined) {
         volatileEnmityInterval = setInterval(simulateVolatileEnmityAdjustments, 1000);
-        triggerCombat();
     }
 
     switch(actionSelected.targetType) {
@@ -208,6 +207,7 @@ function performAction(playerName) {
             break;
         case targetTypes.ENEMY:
             adjustEnmity(playerName, actionSelected.ce, actionSelected.ve);
+            triggerCombat();
             break;
         case targetTypes.PLAYER:
             let selectedPlayer = prompt("Please enter target player name", "");
@@ -231,6 +231,7 @@ function performAction(playerName) {
             break;
         case targetTypes.AOE_ENEMY:
             adjustEnmity(playerName, actionSelected.ce, actionSelected.ve);
+            triggerCombat();
             break;
     }
 }
@@ -245,6 +246,10 @@ function getHighestEnemyPlayer() {
             highestPlayer = player;
         }
     }
+
+    if (max == 0 && aggrodPlayer != null) {
+        highestPlayer = aggrodPlayer;
+    }
     return highestPlayer;
 }
 
@@ -255,14 +260,15 @@ function simulateEnemyDamageOnTarget() {
     adjustCumulativeEnmity(highestEnmPlayer, cumulative_enmity[highestEnmPlayer] - ceLoss);
 }
 
+function aggroEnemy(player) {
+    if (aggrodPlayer == null) {
+        aggrodPlayer = player;
+    }
+    triggerCombat();
+}
+
 function triggerCombat() {
-    if (!combatActive) {
-        if (Object.keys(cumulative_enmity).length === 0) {
-            let messageToUser = document.getElementById("MessageToUser");
-            messageToUser.textContent = "Please add a character to aggro with";
-            return;
-        }
-        combatActive = true;
+    if (cumulativeEnmityInterval == null) {
         cumulativeEnmityInterval = setInterval(simulateEnemyDamageOnTarget, 3000);
     }
 }
@@ -289,8 +295,6 @@ function updateCombatLog(playerName, actionName) {
 }
 
 function stopCombat() {
-    combatActive = false;
-    firstAction = false;
     clearInterval(cumulativeEnmityInterval);
     clearInterval(volatileEnmityInterval);
     for(player in cumulative_enmity) {
@@ -310,6 +314,8 @@ function createActionButton(baseRow, playerName) {
     selectActionInput.id = selectActionInput.name;
     selectActionInput.style = "margin:2px"
 
+    enmityActions.sort((a, b) => a.name.localeCompare(b.name));
+
     for(const action of enmityActions) {
         let newAction = document.createElement("option");
         newAction.value = action.name;
@@ -322,8 +328,14 @@ function createActionButton(baseRow, playerName) {
     actionButton.onclick = function(){performAction(playerName)};
     actionButton.style = "margin:2px"
 
+    let aggroButton = document.createElement("button");
+    aggroButton.innerText = "Aggro Enemy";
+    aggroButton.onclick = function(){aggroEnemy(playerName)};
+    aggroButton.style = "margin:2px"
+
     baseRow.appendChild(selectActionInput);
     baseRow.appendChild(actionButton);
+    baseRow.appendChild(aggroButton);
 }
 
 function createPlayerRow() {
