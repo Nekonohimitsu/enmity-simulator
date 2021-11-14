@@ -96,7 +96,7 @@ const enmityActions = [
 var volatile_enmity = {
 };
 
-var cumlative_enmity = {
+var cumulative_enmity = {
 };
 
 function adjustVolatileEnmity(playerName, newValue) {
@@ -118,15 +118,15 @@ function adjustCumulativeEnmity(playerName, newValue) {
     if (newValue > MAX_CUMULATIVE_ENMITY) {
         newValue = MAX_CUMULATIVE_ENMITY;
     }
-    cumlative_enmity[playerName] = newValue;
+    cumulative_enmity[playerName] = newValue;
     let ceElement = document.getElementById(playerName + "ce");
     if (ceElement) {
-        ceElement.innerText = cumlative_enmity[playerName];
+        ceElement.innerText = cumulative_enmity[playerName];
     }
 }
 
 function getCumulativeEnmity(playerName) {
-    return cumlative_enmity[playerName];    
+    return cumulative_enmity[playerName];    
 }
 
 function adjustEnmity(playerName, actionCE, actionVE) {
@@ -148,8 +148,8 @@ function adjustEnmity(playerName, actionCE, actionVE) {
 }
 
 function partyHasEnmity() {
-    for(cumulativeEnm in cumlative_enmity) {
-        if (cumulativeEnm != 0) {
+    for(cumulativeEnm in cumulative_enmity) {
+        if (cumulative_enmity[cumulativeEnm] != 0) {
             return true;
         }
     }
@@ -182,7 +182,7 @@ function performAction(playerName) {
             adjustEnmity(playerName, actionSelected.ce, actionSelected.ve);
             break;
         case targetTypes.AOE_PLAYER:
-            let numberOfPlayers = Object.keys(cumlative_enmity).length;
+            let numberOfPlayers = Object.keys(cumulative_enmity).length;
             if (!partyHasEnmity()) {
                 return;
             }
@@ -226,7 +226,7 @@ function createPlayerRow() {
     }
 
     volatile_enmity[playerName] = 0;
-    cumlative_enmity[playerName] = 0;
+    cumulative_enmity[playerName] = 0;
 
     let baseRow = document.createElement("tr");
 
@@ -236,7 +236,7 @@ function createPlayerRow() {
     let enmity = document.createElement("td");
     let enmityInput = document.createElement("input");
     enmityInput.id = playerName + "Enmity";
-    enmityInput.style = "width:95%";
+    enmityInput.style = "width:90%";
     enmityInput.value = 0;
     enmity.appendChild(enmityInput);
 
