@@ -121,7 +121,7 @@ function adjustCumulativeEnmity(playerName, newValue) {
     cumulative_enmity[playerName] = newValue;
     let ceElement = document.getElementById(playerName + "ce");
     if (ceElement) {
-        ceElement.innerText = cumulative_enmity[playerName];
+        ceElement.innerText = getCumulativeEnmity(playerName);
     }
 }
 
@@ -148,8 +148,8 @@ function adjustEnmity(playerName, actionCE, actionVE) {
 }
 
 function partyHasEnmity() {
-    for(cumulativeEnm in cumulative_enmity) {
-        if (cumulative_enmity[cumulativeEnm] != 0) {
+    for(playerName in cumulative_enmity) {
+        if (getCumulativeEnmity(playerName) != 0) {
             return true;
         }
     }
@@ -157,7 +157,7 @@ function partyHasEnmity() {
 }
 
 function performAction(playerName) {
-    let actionNameSelected = document.getElementById("actionInput").value;
+    let actionNameSelected = document.getElementById("actionInput" + playerName).value;
     let actionSelected = enmityActions.find((action) => action.name == actionNameSelected);
 
     switch(actionSelected.targetType) {
@@ -168,6 +168,7 @@ function performAction(playerName) {
             adjustEnmity(playerName, actionSelected.ce, actionSelected.ve);
             break;
         case targetTypes.ENEMY:
+            console.log("Adjusting Enmity");
             adjustEnmity(playerName, actionSelected.ce, actionSelected.ve);
             break;
         case targetTypes.PLAYER:
@@ -196,7 +197,7 @@ function performAction(playerName) {
 
 function createActionButton(baseRow, playerName) {
     let selectActionInput = document.createElement("select");
-    selectActionInput.name = "actionInput";
+    selectActionInput.name = "actionInput" + playerName;
     selectActionInput.id = selectActionInput.name;
     selectActionInput.style = "margin:2px"
 
@@ -225,8 +226,8 @@ function createPlayerRow() {
         return;
     }
 
-    volatile_enmity[playerName] = 0;
-    cumulative_enmity[playerName] = 0;
+    adjustVolatileEnmity(playerName, 0);
+    adjustCumulativeEnmity(playerName, 0);
 
     let baseRow = document.createElement("tr");
 
