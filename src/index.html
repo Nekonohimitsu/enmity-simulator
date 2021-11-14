@@ -26,7 +26,7 @@
         <h1>FFXI Enmity Simulator</h1>
         <input id="newPlayerName">
         <button onclick='createPlayerRow();' style="margin-bottom: 10px;">Add Player</button>
-
+        <button onclick='triggerCombat();'style="margin-bottom: 10px;">Aggro Enemy</button>
         <table cellpadding='3' id="basePlayerTable">
             <tr>
                 <th>Player Name</th>
@@ -36,6 +36,8 @@
                 <th>Actions</th>
             </tr>
         </table>
-        <script src="" async defer></script>
+        <p id="MessageToUser" style="color: red;"></p>
+        <textarea id="CombatLog" disabled="true" rows="15" style="resize: none; background-color:lightgray; margin-top: 10px; width:98%;" wrap="hard">
+        </textarea>
     </body>
 </html>

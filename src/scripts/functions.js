@@ -2,6 +2,9 @@ const MAX_CUMULATIVE_ENMITY = 30000;
 const MAX_VOLATILE_ENMITY = 30000;
 const FLASH_VE = 1280;
 const FLASH_CE = 180;
+
+combatActive = false;
+
 /*
 * Class representing an Enmity Action
 */
@@ -158,17 +161,19 @@ function partyHasEnmity() {
 
 function performAction(playerName) {
     let actionNameSelected = document.getElementById("actionInput" + playerName).value;
+    let messageToUser = document.getElementById("MessageToUser");
     let actionSelected = enmityActions.find((action) => action.name == actionNameSelected);
+    updateCombatLog(playerName, actionSelected.name);
 
     switch(actionSelected.targetType) {
         case targetTypes.SELF:
             if (getCumulativeEnmity(playerName) == 0) {
+                messageToUser.textContent = "Notice: This action was performed, but yielded no enmity because it has not been initialized."
                 return;
             }
             adjustEnmity(playerName, actionSelected.ce, actionSelected.ve);
             break;
         case targetTypes.ENEMY:
-            console.log("Adjusting Enmity");
             adjustEnmity(playerName, actionSelected.ce, actionSelected.ve);
             break;
         case targetTypes.PLAYER:
@@ -178,6 +183,7 @@ function performAction(playerName) {
                 alert("Player name does not exist. Self-targeting.")
             }
             if (getCumulativeEnmity(selectedPlayer) == 0 && getCumulativeEnmity(playerName) == 0) {
+                messageToUser.textContent = "Notice: This action was performed, but yielded no enmity because neither you nor the targeted player have enmity."
                 return;
             }
             adjustEnmity(playerName, actionSelected.ce, actionSelected.ve);
@@ -185,6 +191,7 @@ function performAction(playerName) {
         case targetTypes.AOE_PLAYER:
             let numberOfPlayers = Object.keys(cumulative_enmity).length;
             if (!partyHasEnmity()) {
+                messageToUser.textContent = "Notice: This action was performed,  but yielded no enmity because noone in the party has enmity."
                 return;
             }
             adjustEnmity(playerName, actionSelected.ce * numberOfPlayers, actionSelected.ve * numberOfPlayers);
@@ -193,6 +200,15 @@ function performAction(playerName) {
             adjustEnmity(playerName, actionSelected.ce, actionSelected.ve);
             break;
     }
+}
+
+function triggetCombat() {
+    combatActive = true;
+}
+
+function updateCombatLog(playerName, actionName) {
+    let combatLog = document.getElementById("CombatLog");
+    combatLog.textContent = combatLog.textContent + "\n" + playerName + " has performed " + actionName + "."; 
 }
 
 function createActionButton(baseRow, playerName) {
