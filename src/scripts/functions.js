@@ -158,6 +158,7 @@ function partyHasEnmity() {
 
 function performAction(playerName) {
     let actionNameSelected = document.getElementById("actionInput" + playerName).value;
+    let messageToUser = document.getElementById("MessageToUser");
     let actionSelected = enmityActions.find((action) => action.name == actionNameSelected);
 
     switch(actionSelected.targetType) {
