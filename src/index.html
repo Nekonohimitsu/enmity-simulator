@@ -26,7 +26,7 @@
         <h1>FFXI Enmity Simulator</h1>
         <input id="newPlayerName">
         <button onclick='createPlayerRow();' style="margin-bottom: 10px;">Add Player</button>
-
+        <button onclick='triggerCombat();'style="margin-bottom: 10px;">Aggro Enemy</button>
         <table cellpadding='3' id="basePlayerTable">
             <tr>
                 <th>Player Name</th>
@@ -38,7 +38,6 @@
         </table>
         <p id="MessageToUser" style="color: red;"></p>
         <textarea id="CombatLog" disabled="true" rows="15" style="resize: none; background-color:lightgray; margin-top: 10px; width:98%;" wrap="hard">
-This is a really long sentence to test how this looks in the combat log that is a text area in HTML.
         </textarea>
     </body>
 </html>

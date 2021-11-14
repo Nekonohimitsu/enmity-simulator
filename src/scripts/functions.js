@@ -2,6 +2,9 @@ const MAX_CUMULATIVE_ENMITY = 30000;
 const MAX_VOLATILE_ENMITY = 30000;
 const FLASH_VE = 1280;
 const FLASH_CE = 180;
+
+combatActive = false;
+
 /*
 * Class representing an Enmity Action
 */
@@ -160,6 +163,7 @@ function performAction(playerName) {
     let actionNameSelected = document.getElementById("actionInput" + playerName).value;
     let messageToUser = document.getElementById("MessageToUser");
     let actionSelected = enmityActions.find((action) => action.name == actionNameSelected);
+    updateCombatLog(playerName, actionSelected.name);
 
     switch(actionSelected.targetType) {
         case targetTypes.SELF:
@@ -196,6 +200,15 @@ function performAction(playerName) {
             adjustEnmity(playerName, actionSelected.ce, actionSelected.ve);
             break;
     }
+}
+
+function triggetCombat() {
+    combatActive = true;
+}
+
+function updateCombatLog(playerName, actionName) {
+    let combatLog = document.getElementById("CombatLog");
+    combatLog.textContent = combatLog.textContent + "\n" + playerName + " has performed " + actionName + "."; 
 }
 
 function createActionButton(baseRow, playerName) {
