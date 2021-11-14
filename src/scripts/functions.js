@@ -1,9 +1,19 @@
 const MAX_CUMULATIVE_ENMITY = 30000;
 const MAX_VOLATILE_ENMITY = 30000;
+const MIN_CUMULATIVE_ENMITY = 1;
+const MIN_VOLATILE_ENMITY = 0;
 const FLASH_VE = 1280;
 const FLASH_CE = 180;
+const CLEAR_ACTION = "CLEAR";
+const DAMAGE_ACTION = "DAMAGE";
+const DAMAGE_FROM_DAMAGE_ACTION = 100;
+const ASSUMED_MAXIMUM_HP = 1200;
+const VOLATILE_ENMITY_LOSS_PER_SECOND = 60;
 
 combatActive = false;
+firstAction = false;
+volatileEnmityInterval = null;
+cumulativeEnmityInterval = null;
 
 /*
 * Class representing an Enmity Action
@@ -94,6 +104,8 @@ const enmityActions = [
     new EnmityAction("Holy Circle",20,1, [jobs.PLD], targetTypes.AOE_PLAYER),
     new EnmityAction("Jubaku: Ichi",100,20, [jobs.NIN], targetTypes.ENEMY),
     new EnmityAction("MP Drainkiss",0,320, [jobs.BLU], targetTypes.ENEMY),
+    new EnmityAction("Cure",-1,-1,[jobs.PLD], targetTypes.PLAYER),
+    new EnmityAction("Damage",-1, -1, [jobs.NIN], targetTypes.ENEMY)
 ];
 
 var volatile_enmity = {
@@ -105,6 +117,9 @@ var cumulative_enmity = {
 function adjustVolatileEnmity(playerName, newValue) {
     if (newValue > MAX_VOLATILE_ENMITY) {
         newValue = MAX_VOLATILE_ENMITY;
+    }
+    if (newValue < MIN_VOLATILE_ENMITY) {
+        newValue = MIN_VOLATILE_ENMITY;
     }
     volatile_enmity[playerName] = newValue;
     let veElement = document.getElementById(playerName + "ve")
@@ -120,6 +135,13 @@ function getVolatileEnmity(playerName) {
 function adjustCumulativeEnmity(playerName, newValue) {
     if (newValue > MAX_CUMULATIVE_ENMITY) {
         newValue = MAX_CUMULATIVE_ENMITY;
+    }
+    if (newValue < MIN_CUMULATIVE_ENMITY) {
+        if (cumulative_enmity[playerName] == 0 || cumulative_enmity[playerName] == undefined) {
+            newValue = 0;
+        } else {
+            newValue = MIN_CUMULATIVE_ENMITY;
+        }
     }
     cumulative_enmity[playerName] = newValue;
     let ceElement = document.getElementById(playerName + "ce");
@@ -159,11 +181,22 @@ function partyHasEnmity() {
     return false;
 }
 
+function simulateVolatileEnmityAdjustments() {
+    for(player in volatile_enmity) {
+        adjustVolatileEnmity(player, volatile_enmity[player] - VOLATILE_ENMITY_LOSS_PER_SECOND);
+    }
+}
+
 function performAction(playerName) {
     let actionNameSelected = document.getElementById("actionInput" + playerName).value;
     let messageToUser = document.getElementById("MessageToUser");
     let actionSelected = enmityActions.find((action) => action.name == actionNameSelected);
     updateCombatLog(playerName, actionSelected.name);
+    if (!firstAction) {
+        firstAction = true;
+        volatileEnmityInterval = setInterval(simulateVolatileEnmityAdjustments, 1000);
+        triggerCombat();
+    }
 
     switch(actionSelected.targetType) {
         case targetTypes.SELF:
@@ -202,13 +235,73 @@ function performAction(playerName) {
     }
 }
 
-function triggetCombat() {
-    combatActive = true;
+function getHighestEnemyPlayer() {
+    max = -1;
+    highestPlayer = "";
+    for(player in cumulative_enmity) {
+        totalEnmity = cumulative_enmity[player] + volatile_enmity[player];
+        if (totalEnmity > max) {
+            max = totalEnmity;
+            highestPlayer = player;
+        }
+    }
+    return highestPlayer;
+}
+
+function simulateEnemyDamageOnTarget() {
+    const highestEnmPlayer = getHighestEnemyPlayer();
+    updateCombatLog(highestEnmPlayer, DAMAGE_ACTION);
+    const ceLoss = Math.floor(1800 * DAMAGE_FROM_DAMAGE_ACTION / ASSUMED_MAXIMUM_HP);
+    adjustCumulativeEnmity(highestEnmPlayer, cumulative_enmity[highestEnmPlayer] - ceLoss);
+}
+
+function triggerCombat() {
+    if (!combatActive) {
+        if (Object.keys(cumulative_enmity).length === 0) {
+            let messageToUser = document.getElementById("MessageToUser");
+            messageToUser.textContent = "Please add a character to aggro with";
+            return;
+        }
+        combatActive = true;
+        cumulativeEnmityInterval = setInterval(simulateEnemyDamageOnTarget, 3000);
+    }
 }
 
 function updateCombatLog(playerName, actionName) {
     let combatLog = document.getElementById("CombatLog");
-    combatLog.textContent = combatLog.textContent + "\n" + playerName + " has performed " + actionName + "."; 
+    if (combatLog.textContent != "" && combatLog.textContent != undefined) {
+        combatLog.textContent = combatLog.textContent + "\n";
+    }
+
+    switch(actionName) {
+        case DAMAGE_ACTION:
+            combatLog.textContent = combatLog.textContent + playerName + " has taken " + DAMAGE_FROM_DAMAGE_ACTION + " points of damage.";
+            break;
+        case CLEAR_ACTION:
+            combatLog.textContent = "";
+            break;
+        default:        
+            combatLog.textContent = combatLog.textContent + playerName + " has performed " + actionName + "."; 
+            break;
+    }
+
+    combatLog.scrollTop = combatLog.scrollHeight;
+}
+
+function stopCombat() {
+    combatActive = false;
+    firstAction = false;
+    clearInterval(cumulativeEnmityInterval);
+    clearInterval(volatileEnmityInterval);
+    for(player in cumulative_enmity) {
+        let ceElement = document.getElementById(player + "ce");
+        let veElement = document.getElementById(player + "ve");
+        cumulative_enmity[player] = 0;
+        ceElement.innerText = 0;
+        volatile_enmity[player] = 0;
+        veElement.innerText = 0;
+    }
+    updateCombatLog("", CLEAR_ACTION);
 }
 
 function createActionButton(baseRow, playerName) {
